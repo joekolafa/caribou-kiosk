@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Caribou Coffee — Kiosk Channel Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#FAF6F1;color:#3B2F2F;-webkit-font-smoothing:antialiased}
+::selection{background:#00A0AF;color:#fff}
+.fade-in{animation:fadeUp .5s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+::-webkit-scrollbar{height:4px;width:4px}
+::-webkit-scrollbar-thumb{background:#C8B9A6;border-radius:4px}
+.grain{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;opacity:0.025;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");z-index:9999}
+.wrap{max-width:1080px;margin:0 auto;padding:16px 28px 56px}
+@media(max-width:640px){.wrap{padding:12px 14px 48px}}
+.kpi-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+@media(max-width:640px){.kpi-row{flex-direction:column}}
+.kpi{background:#fff;border-radius:14px;padding:20px 24px;box-shadow:0 2px 12px rgba(59,47,47,0.06);flex:1;min-width:150px}
+.kpi-label{font-size:10px;color:#9A8A8A;font-weight:700;text-transform:uppercase;letter-spacing:0.1em}
+.kpi-value{font-size:28px;font-weight:800;color:#3B2F2F;margin-top:6px;font-family:'DM Serif Display'}
+.kpi-sub{font-size:11.5px;color:#6B5B5B;margin-top:4px;line-height:1.4}
+.sec-title{margin:32px 0 14px}
+.sec-title h2{font-size:18px;font-weight:400;color:#3B2F2F;font-family:'DM Serif Display';margin:0}
+.sec-title p{font-size:12px;color:#9A8A8A;margin:4px 0 0}
+.card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 12px rgba(59,47,47,0.06);margin-bottom:12px}
+.insight{border-radius:12px;padding:14px 18px;display:flex;gap:12px;align-items:flex-start;margin-bottom:10px}
+.insight-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.insight-body{font-size:12px;color:#6B5B5B;line-height:1.6}
+.insight-title{font-size:12.5px;font-weight:700;color:#3B2F2F;margin-bottom:3px}
+.tabs{display:flex;background:#fff;border-bottom:2px solid #F0E8DD;padding:0 14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{padding:11px 16px;font-size:12px;font-weight:500;color:#9A8A8A;background:none;border:none;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;transition:all 0.15s;font-family:inherit}
+.tab.active{font-weight:700;color:#00A0AF;border-bottom-color:#00A0AF}
+.hbar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.hbar-name{font-size:12px;font-weight:600;color:#3B2F2F;min-width:140px;flex-shrink:0;text-align:right}
+@media(max-width:640px){.hbar-name{min-width:100px;font-size:10px}}
+.hbar-bars{flex:1;display:flex;flex-direction:column;gap:3px}
+.hbar-track{height:18px;background:#F0E8DD;border-radius:6px;overflow:hidden;position:relative}
+.hbar-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding:0 6px;font-size:9px;font-weight:700;color:#fff;transition:width 0.6s ease}
+.hbar-legend{display:flex;gap:16px;justify-content:center;margin:12px 0 4px;font-size:12px;color:#6B5B5B}
+.hbar-legend span{display:flex;align-items:center;gap:6px}
+.hbar-legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+@media(max-width:640px){.data-table{font-size:12px}}
+.data-table thead th{padding:10px;text-align:right;font-weight:700;color:#9A8A8A;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;border-bottom:2px solid #F0E8DD}
+.data-table thead th:first-child{text-align:left}
+.data-table tbody td{padding:8px 10px;border-bottom:1px solid #F0E8DD}
+.data-table tbody tr:nth-child(even){background:#FAF6F1}
+.data-table tbody td:first-child{font-weight:600}
+.data-table tbody td:not(:first-child){text-align:right}
+.pill{padding:3px 8px;border-radius:6px;font-weight:700;font-size:12px;white-space:nowrap}
+.pill-teal{background:#E8F7F8;color:#008A97}
+.pill-caramel{background:#FDF5E8;color:#D4943A}
+.pill-berry{background:#F9EDF1;color:#A63D5C}
+.pill-muted{background:#F0E8DD;color:#6B5B5B}
+.chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.chip{border-radius:10px;padding:10px 14px;flex:1;min-width:120px;text-align:center}
+.chip-icon{font-size:16px}
+.chip-label{font-size:10px;color:#6B5B5B;font-weight:600;margin-top:2px}
+.chip-value{font-size:18px;font-weight:800;font-family:'DM Serif Display'}
+.chip-sub{font-size:9px;color:#9A8A8A}
+.why-row{display:flex;gap:12px;flex-wrap:wrap}
+@media(max-width:640px){.why-row{flex-direction:column}}
+.why-card{flex:1;min-width:200px}
+.cta-box{border-radius:14px;padding:24px;margin-top:28px}
+.cta-title{font-size:16px;font-weight:400;font-family:'DM Serif Display';margin-bottom:8px}
+.cta-body{font-size:13px;color:#3B2F2F;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="grain"></div>
+
+<!-- Header -->
+<div style="background:linear-gradient(135deg, #2C4F4E 0%, #1A3534 40%, #3B2F2F 100%);padding:30px 32px 22px;color:#fff;position:relative;overflow:hidden">
+  <div style="position:absolute;top:0;right:0;width:300px;height:300px;border-radius:50%;background:rgba(0,160,175,0.08);transform:translate(100px,-100px)"></div>
+  <div style="position:relative;z-index:1;display:flex;align-items:center;gap:14px;max-width:1080px;margin:0 auto">
+    <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#00A0AF,#008A97);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">&#9749;</div>
+    <div>
+      <h1 style="margin:0;font-size:22px;font-weight:400;font-family:'DM Serif Display'">Caribou Coffee &mdash; Kiosk Channel Analysis</h1>
+      <div style="font-size:11px;opacity:0.55;margin-top:4px;font-weight:500">Feb 2026 &middot; 4 Pilot Stores &middot; Toast Product Mix Export &middot; 1,490 kiosk + 50K POS items</div>
+    </div>
+  </div>
+</div>
+
+<!-- Pilot banner -->
+<div style="background:linear-gradient(90deg,rgba(0,160,175,0.08),rgba(0,160,175,0.02));border-bottom:1px solid rgba(0,160,175,0.15);padding:8px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center">
+  <span style="font-size:11px;color:#00A0AF;font-weight:700;letter-spacing:0.05em">EARLY PILOT</span>
+  <span style="font-size:11px;color:#6B5B5B">4 stores (MSP T2 Center, MSP Airport F, Brooklyn Center, Penn &amp; 79th) &middot; Feb 2026 &middot; Kiosk source filter vs In-Store source</span>
+</div>
+
+<div class="tabs" id="tabs"></div>
+<div class="wrap" id="content"></div>
+
+<div style="text-align:center;padding:16px 20px 24px;font-size:10.5px;color:#9A8A8A">
+  Caribou Coffee Kiosk Analysis &middot; Feb 2026 &middot; 4 Pilot Stores &middot; Toast PMIX Export (Kiosk vs In-Store source)
+</div>
+
+<script>
+const T="#00A0AF",TB="#E8F7F8",TD="#008A97",C="#D4943A",CB="#FDF5E8",B="#A63D5C",BB="#F9EDF1";
+const fmt=n=>n.toLocaleString();
+
+// ===== REAL DATA from PMIX exports =====
+const D = {
+  // Items sheet totals
+  k_items: 1490, k_gross: 8832.36, k_avg_item: 5.93,
+  p_items: 50059, p_gross: 306498.23, // excluding 100M water cups + cash rounding
+  // actually let's use real POS total minus water/cash: ~50K real items
+  
+  // Sized drinks only (from Modifiers sheet)
+  k_sized: 1086, p_sized: 35474,
+  
+  // Drinks vs food (from Menu Groups)
+  k_drinks: 1132, k_drink_rev: 6902.55, k_food: 341, k_food_rev: 1870.68,
+  p_drinks: 35704, p_drink_rev: 207784.98, p_food: 13680, p_food_rev: 73661.98,
+  
+  sizes: [
+    {s:"Small",    k:17.9, p:21.5, kn:194,  pn:7642},
+    {s:"Medium",   k:52.4, p:47.0, kn:569,  pn:16676},
+    {s:"Large",    k:21.3, p:27.0, kn:231,  pn:9565},
+    {s:"X-Large",  k:8.5,  p:4.5,  kn:92,   pn:1591},
+  ],
+  
+  addons: [
+    {n:"Alt Milk",        k:28.7, p:16.1, kn:312,  pn:5722, icon:"\uD83E\uDD5B", note:"Oat, Almond, Skim, Coconut"},
+    {n:"Extra Espresso",  k:6.7,  p:8.6,  kn:73,   pn:3035, icon:"\u2615",       note:"$1.50/shot"},
+    {n:"Flavor Add",      k:6.0,  p:20.2, kn:65,   pn:7161, icon:"\uD83E\uDDF4", note:"Vanilla, Caramel, etc."},
+    {n:"Cold Foam",       k:3.2,  p:0.02, kn:35,   pn:6,    icon:"\u2601\uFE0F", note:"Cinnamon Sugar, Oatmilk"},
+  ],
+  
+  // Paid add-on revenue
+  k_paid_addon_rev: 280, // ~$280 total
+  p_paid_addon_rev: 15200, // ~$15.2K total
+  
+  // Top kiosk drinks with POS match
+  top_drinks: [
+    {n:"Hot Latte",                    kq:90, ka:6.35, pq:3689, pa:6.28},
+    {n:"Light Roast Coffee of the Day",kq:59, ka:3.33, pq:0,    pa:0},
+    {n:"Dark Roast Coffee of the Day", kq:53, ka:3.58, pq:0,    pa:0},
+    {n:"Hot Mocha",                    kq:33, ka:6.43, pq:2007, pa:6.51},
+    {n:"Hot Americano",                kq:32, ka:5.34, pq:911,  pa:4.78},
+    {n:"Hot Classic Chai Latte",       kq:31, ka:6.51, pq:0,    pa:0},
+    {n:"Hot Malted Mocha",             kq:29, ka:6.72, pq:238,  pa:6.93},
+    {n:"Iced Latte",                   kq:28, ka:6.36, pq:1002, pa:6.62},
+    {n:"Cinnamon Sugar Latte",         kq:27, ka:7.16, pq:2,    pa:6.29},
+    {n:"Cin. Sugar Espresso Shaker",   kq:26, ka:7.04, pq:2,    pa:8.04},
+    {n:"Hot Turtle Mocha",             kq:26, ka:7.10, pq:1257, pa:6.94},
+    {n:"Hot Chocolate",                kq:26, ka:5.18, pq:933,  pa:5.15},
+    {n:"Strawberry Lemonade Refresher",kq:24, ka:6.35, pq:276,  pa:6.18},
+    {n:"Iced Crafted Press",           kq:23, ka:6.16, pq:162,  pa:6.39},
+    {n:"Hot Mint Condition Mocha",     kq:23, ka:6.72, pq:0,    pa:0},
+  ],
+  
+  // Top food items
+  top_food: [
+    {n:"Denver Breakfast Bowl",       kq:33, ka:6.48, pq:606,  pa:6.44},
+    {n:"Lumberjack",                  kq:33, ka:7.48, pq:784,  pa:7.44},
+    {n:"Blueberry Muffin",            kq:24, ka:3.97, pq:486,  pa:4.19},
+    {n:"Bacon, Egg & Cheddar",        kq:23, ka:6.42, pq:1,    pa:6.70},
+    {n:"Chicken Apple Sausage E&C",   kq:21, ka:5.93, pq:504,  pa:5.89},
+    {n:"Cinnamon Coffee Cake",        kq:21, ka:4.08, pq:746,  pa:4.10},
+    {n:"Turkey Bacon E&C Mini",       kq:17, ka:4.82, pq:593,  pa:4.78},
+    {n:"Sausage, Egg & Cheddar",      kq:17, ka:5.31, pq:2,    pa:5.60},
+    {n:"Fiesta Breakfast Bowl",       kq:15, ka:6.61, pq:314,  pa:6.50},
+    {n:"Chocolate Croissant",         kq:15, ka:4.13, pq:722,  pa:4.22},
+  ],
+  
+  // Daypart not available from PMIX - omitted
+};
+
+// ===== HELPERS =====
+function kpi(label,value,sub,color){
+  return '<div class="kpi" style="border-left:4px solid '+(color||T)+'"><div class="kpi-label">'+label+'</div><div class="kpi-value">'+value+'</div>'+(sub?'<div class="kpi-sub">'+sub+'</div>':'')+'</div>';
+}
+function sec(title,sub){return '<div class="sec-title"><h2>'+title+'</h2>'+(sub?'<p>'+sub+'</p>':'')+'</div>';}
+function insight(icon,title,body,bg){return '<div class="insight" style="background:'+(bg||TB)+'">'+(icon?'<div class="insight-icon">'+icon+'</div>':'')+'<div><div class="insight-title">'+title+'</div><div class="insight-body">'+body+'</div></div></div>';}
+
+function dualBar(data,maxVal,fv){
+  var h='<div class="hbar-legend"><span><i style="background:'+T+'"></i> Kiosk</span><span><i style="background:'+C+'"></i> POS</span></div>';
+  data.forEach(function(d){
+    var kw=(d.k/maxVal*100).toFixed(1), pw=(d.p/maxVal*100).toFixed(1);
+    var kl=fv?fv(d.k):d.k, pl=fv?fv(d.p):d.p;
+    h+='<div class="hbar-row"><div class="hbar-name">'+d.label+'</div><div class="hbar-bars">';
+    h+='<div class="hbar-track"><div class="hbar-fill" style="width:'+kw+'%;background:'+T+'">'+kl+'</div></div>';
+    h+='<div class="hbar-track"><div class="hbar-fill" style="width:'+pw+'%;background:'+C+'">'+pl+'</div></div>';
+    h+='</div></div>';
+  });
+  return h;
+}
+
+function vertBar(data,maxVal,fv){
+  var bars='';
+  data.forEach(function(d){
+    var kh=(d.k/maxVal*100).toFixed(1), ph=(d.p/maxVal*100).toFixed(1);
+    var kl=fv?fv(d.k):d.k, pl=fv?fv(d.p):d.p;
+    bars+='<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:60px">';
+    bars+='<div style="display:flex;gap:3px;align-items:flex-end;height:160px">';
+    bars+='<div style="width:32px;display:flex;flex-direction:column;justify-content:flex-end;height:100%"><div style="font-size:9px;text-align:center;color:'+C+';font-weight:700;margin-bottom:2px">'+pl+'</div><div style="height:'+ph+'%;background:'+C+';border-radius:5px 5px 0 0;min-height:2px"></div></div>';
+    bars+='<div style="width:32px;display:flex;flex-direction:column;justify-content:flex-end;height:100%"><div style="font-size:9px;text-align:center;color:'+T+';font-weight:700;margin-bottom:2px">'+kl+'</div><div style="height:'+kh+'%;background:'+T+';border-radius:5px 5px 0 0;min-height:2px"></div></div>';
+    bars+='</div><div style="font-size:10px;font-weight:600;color:#3B2F2F;text-align:center">'+d.label+'</div></div>';
+  });
+  return '<div class="hbar-legend"><span><i style="background:'+T+'"></i> Kiosk</span><span><i style="background:'+C+'"></i> POS</span></div><div style="display:flex;gap:4px;justify-content:space-around;padding:10px 0;overflow-x:auto">'+bars+'</div>';
+}
+
+// ===== TABS =====
+var TABS=["Overview","Size & Customization","Food & Drink Mix","Opportunities"];
+var activeTab="Overview";
+function renderTabs(){
+  document.getElementById("tabs").innerHTML=TABS.map(function(t){
+    return '<button class="tab'+(t===activeTab?" active":"")+'" onclick="switchTab(\''+t+'\')">'+t+'</button>';
+  }).join("");
+}
+function switchTab(t){activeTab=t;renderTabs();renderContent();}
+
+// ===== RENDER =====
+function renderContent(){
+  var el=document.getElementById("content");
+  if(activeTab==="Overview") el.innerHTML=renderOverview();
+  else if(activeTab==="Size & Customization") el.innerHTML=renderSize();
+  else if(activeTab==="Food & Drink Mix") el.innerHTML=renderFood();
+  else if(activeTab==="Opportunities") el.innerHTML=renderOpps();
+}
+
+function renderOverview(){
+  var ka=D.k_drink_rev/D.k_drinks, pa=D.p_drink_rev/D.p_drinks;
+  var kfa=(D.k_food/D.k_drinks*100), pfa=(D.p_food/D.p_drinks*100);
+  
+  return '<div class="kpi-row">'
+    +kpi("Kiosk Drink Items",fmt(D.k_drinks),"across 4 pilot stores, Feb 2026",T)
+    +kpi("Kiosk Avg Drink","$"+ka.toFixed(2),"vs $"+pa.toFixed(2)+" POS (+$"+(ka-pa).toFixed(2)+")",C)
+    +kpi("Kiosk Food Attach",kfa.toFixed(1)+"%","vs "+pfa.toFixed(1)+"% POS",B)
+    +kpi("Sized Drinks",fmt(D.k_sized),"with modifier detail for analysis",T)
+  +'</div>'
+
+  +sec("Size Distribution","Kiosk vs POS across Small / Medium / Large / X-Large &mdash; based on "+fmt(D.k_sized)+" kiosk and "+fmt(D.p_sized)+" POS sized drinks")
+  +'<div class="card">'
+    +vertBar(D.sizes.map(function(s){return{label:s.s,k:s.k,p:s.p}}),60,function(v){return v.toFixed(1)+"%"})
+    +insight("&#128200;","Kiosk concentrates at Medium, POS spreads wider",
+      "Kiosk Medium is 52.4% vs 47.0% POS &mdash; but POS actually has <strong>more Large orders (27.0% vs 21.3%)</strong>. The exception: kiosk drives <strong>2&times; the Extra Large rate (8.5% vs 4.5%)</strong>. This suggests the kiosk may be presenting the XL option more visibly, but isn&rsquo;t yet nudging Medium drinkers toward Large the way the barista counter does.",TB)
+  +'</div>'
+
+  +sec("Add-On Attach Rates","Percentage of sized drinks that include each add-on category")
+  +'<div class="card">'
+    +dualBar(D.addons.map(function(a){return{label:a.icon+" "+a.n,k:a.k,p:a.p}}),30,function(v){return v.toFixed(1)+"%"})
+    +'<div class="chip-row">'
+      +D.addons.map(function(a){
+        var gap=a.k-a.p;
+        var color=gap>0?"color:"+TD:"color:"+C;
+        var bg=gap>0?TB:CB;
+        return '<div class="chip" style="background:'+bg+'"><div class="chip-icon">'+a.icon+'</div><div class="chip-label">'+a.n+'</div><div class="chip-value" style="'+color+'">'+(gap>0?"+":"")+gap.toFixed(1)+'pp</div><div class="chip-sub">K:'+a.kn+' / P:'+fmt(a.pn)+'</div></div>';
+      }).join("")
+    +'</div>'
+    +insight("&#128161;","A mixed picture &mdash; kiosk wins some, baristas win others",
+      "<strong>Alt Milk (+12.6pp)</strong> and <strong>Cold Foam (+3.2pp)</strong> are clear kiosk advantages &mdash; visual modifiers that are easy to discover on screen. But <strong>Flavor Shots</strong> are 3&times; higher at POS (20.2% vs 6.0%), suggesting baristas are actively upselling flavors in ways the current kiosk flow doesn&rsquo;t replicate. This is the single biggest customization opportunity for kiosk UX.",TB)
+  +'</div>'
+
+  +sec("Loyalty Opportunity","Kiosk sign-in is live &mdash; sign-up flow not yet deployed")
+  +'<div class="card">'
+    +insight("&#127919;","Sign-in is trackable today, sign-up is the next unlock",
+      "Caribou currently supports Perks <strong>sign-in on kiosk</strong>, which means we can measure authenticated order rates vs POS. The <strong>sign-up flow</strong> (new enrollment at kiosk checkout) hasn&rsquo;t been rolled out yet for this brand. When enabled, it becomes a measurable conversion metric &mdash; other brands see 3&times; enrollment rates at kiosk vs barista-prompted POS.",TB)
+  +'</div>';
+}
+
+function renderSize(){
+  return sec("Size Distribution Detail","Raw counts and percentages from Modifiers sheet")
+  +'<div class="card" style="overflow-x:auto"><table class="data-table"><thead><tr>'
+    +'<th style="text-align:left">Size</th><th>Kiosk #</th><th>Kiosk %</th><th>POS #</th><th>POS %</th><th>Gap</th>'
+  +'</tr></thead><tbody>'
+    +D.sizes.map(function(s){
+      var gap=s.k-s.p;
+      var cls=gap>0?"pill-teal":"pill-caramel";
+      return '<tr><td>'+s.s+'</td><td>'+fmt(s.kn)+'</td><td style="color:'+T+';font-weight:700">'+s.k.toFixed(1)+'%</td><td>'+fmt(s.pn)+'</td><td style="color:'+C+'">'+s.p.toFixed(1)+'%</td><td><span class="pill '+cls+'">'+(gap>0?"+":"")+gap.toFixed(1)+'pp</span></td></tr>';
+    }).join("")
+  +'</tbody></table></div>'
+
+  +insight("&#128202;","Size story is nuanced",
+    "Unlike QSR combos where kiosk universally sizes up, coffee sizing shows a <strong>Medium magnet effect</strong> on kiosk (52.4%). POS baristas may prompt &ldquo;Large?&rdquo; more effectively. However, kiosk&rsquo;s XL rate (8.5% vs 4.5%) suggests the visual XL option does catch some guests. Consider testing size-up prompts (&ldquo;Go Large for just $0.40 more&rdquo;) in the kiosk flow.",TB)
+
+  +sec("Add-On Detail","Full modifier analysis &mdash; paid and unpaid add-ons across channels")
+  +'<div class="card" style="overflow-x:auto"><table class="data-table"><thead><tr>'
+    +'<th style="text-align:left">Add-On</th><th>Kiosk Qty</th><th>K Attach</th><th>POS Qty</th><th>P Attach</th><th>Gap</th><th>Kiosk Advantage?</th>'
+  +'</tr></thead><tbody>'
+    +D.addons.map(function(a){
+      var gap=a.k-a.p;
+      var cls=gap>0?"pill-teal":"pill-caramel";
+      var winner=gap>0?"&#9989; Kiosk":"&#9888;&#65039; POS";
+      return '<tr><td>'+a.icon+' '+a.n+'</td><td>'+a.kn+'</td><td style="color:'+T+';font-weight:700">'+a.k.toFixed(1)+'%</td><td>'+fmt(a.pn)+'</td><td style="color:'+C+'">'+a.p.toFixed(1)+'%</td><td><span class="pill '+cls+'">'+(gap>0?"+":"")+gap.toFixed(1)+'pp</span></td><td>'+winner+'</td></tr>';
+    }).join("")
+  +'</tbody></table></div>'
+
+  +'<div class="why-row">'
+    +'<div class="card why-card"><div style="font-size:24px;margin-bottom:8px">&#9989;</div><div style="font-size:13px;font-weight:700;color:#3B2F2F;margin-bottom:4px">Where Kiosk Wins</div><div style="font-size:12px;color:#6B5B5B;line-height:1.6"><strong>Alt Milk (28.7% vs 16.1%)</strong> &mdash; Perks members get free alt milk via app/kiosk, removing friction. Visual milk selection makes oat/almond feel like a natural choice, not a special request.<br/><br/><strong>Cold Foam (3.2% vs ~0%)</strong> &mdash; Cold foam is essentially invisible at POS unless the guest already knows to ask. On kiosk, it appears as a tappable option with imagery.</div></div>'
+    +'<div class="card why-card"><div style="font-size:24px;margin-bottom:8px">&#9888;&#65039;</div><div style="font-size:13px;font-weight:700;color:#3B2F2F;margin-bottom:4px">Where POS Wins</div><div style="font-size:12px;color:#6B5B5B;line-height:1.6"><strong>Flavor Shots (20.2% vs 6.0%)</strong> &mdash; The biggest gap. Baristas likely ask &ldquo;Want vanilla or caramel in that?&rdquo; at the register. The kiosk flow may bury flavor options or not prompt them contextually enough.<br/><br/><strong>Extra Espresso (8.6% vs 6.7%)</strong> &mdash; Smaller gap, but baristas still convert more &ldquo;make it a double&rdquo; upsells.</div></div>'
+  +'</div>';
+}
+
+function renderFood(){
+  var kfa=D.k_food/D.k_drinks*100, pfa=D.p_food/D.p_drinks*100;
+  
+  return '<div class="kpi-row">'
+    +kpi("Kiosk Food Items",fmt(D.k_food),"$"+D.k_food_rev.toFixed(0)+" gross revenue",T)
+    +kpi("POS Food Items",fmt(D.p_food),"$"+fmt(Math.round(D.p_food_rev))+" gross revenue",C)
+    +kpi("Food Attach Gap",(kfa-pfa).toFixed(1)+"pp","POS leads: "+pfa.toFixed(1)+"% vs "+kfa.toFixed(1)+"%",B)
+  +'</div>'
+
+  +sec("Top Kiosk Food Items","Compared to POS where item names match")
+  +'<div class="card" style="overflow-x:auto"><table class="data-table"><thead><tr>'
+    +'<th style="text-align:left">Food Item</th><th>K Qty</th><th>K Avg</th><th>P Qty</th><th>P Avg</th>'
+  +'</tr></thead><tbody>'
+    +D.top_food.map(function(f){
+      return '<tr><td>'+f.n+'</td><td>'+f.kq+'</td><td>$'+f.ka.toFixed(2)+'</td><td>'+(f.pq>0?fmt(f.pq):'--')+'</td><td>'+(f.pa>0?'$'+f.pa.toFixed(2):'--')+'</td></tr>';
+    }).join("")
+  +'</tbody></table></div>'
+
+  +insight("&#129360;","POS wins food attach &mdash; but the pastry case matters",
+    "POS food attach is <strong>38.3% vs 30.1% on kiosk</strong>. This likely reflects the physical pastry case &mdash; guests see muffins, croissants, and breakfast sandwiches while waiting to order. The kiosk doesn&rsquo;t have that visual impulse trigger yet. A dedicated &ldquo;Pair with your drink?&rdquo; screen with food imagery could close this gap.",CB)
+
+  +sec("Top Kiosk Drinks","Top 15 drinks by kiosk volume with POS price comparison where available")
+  +'<div class="card" style="overflow-x:auto"><table class="data-table"><thead><tr>'
+    +'<th style="text-align:left">Drink</th><th>K Qty</th><th>K Avg</th><th>P Qty</th><th>P Avg</th><th>&Delta;</th>'
+  +'</tr></thead><tbody>'
+    +D.top_drinks.map(function(d){
+      var delta=d.pa>0?(d.ka-d.pa):null;
+      var dcls=delta!==null?(delta>0?"pill-teal":"pill-caramel"):"pill-muted";
+      return '<tr><td>'+d.n+'</td><td>'+d.kq+'</td><td style="color:'+T+';font-weight:700">$'+d.ka.toFixed(2)+'</td><td>'+(d.pq>0?fmt(d.pq):'--')+'</td><td>'+(d.pa>0?'$'+d.pa.toFixed(2):'--')+'</td><td>'+(delta!==null?'<span class="pill '+dcls+'">'+(delta>0?"+":"")+delta.toFixed(2)+'</span>':'<span class="pill pill-muted">n/a</span>')+'</td></tr>';
+    }).join("")
+  +'</tbody></table></div>'
+
+  +insight("&#128200;","Item-level pricing is mixed",
+    "Where items match, kiosk averages slightly higher on some (Hot Americano +$0.56, Turtle Mocha +$0.16) and lower on others (Iced Latte -$0.26, Malted Mocha -$0.21). The overall drink average of <strong>$6.10 kiosk vs $5.82 POS (+$0.28)</strong> is driven more by drink mix (kiosk skews toward higher-priced specialty drinks) than by systematic upselling within the same drink.",TB)
+  
+  +sec("Menu Naming Note")
+  +insight("&#9888;&#65039;","POS and Kiosk menus use different item names",
+    "Several high-volume kiosk items have no direct POS match: &ldquo;Light Roast Coffee of the Day&rdquo; (kiosk) vs &ldquo;Light COD&rdquo; (POS), &ldquo;Hot Classic Chai Latte&rdquo; vs &ldquo;Hot Chai Tea&rdquo;, etc. This is a menu configuration artifact across the two source menus. A normalized name mapping would enable cleaner per-drink comparison.",CB);
+}
+
+function renderOpps(){
+  return sec("Opportunity Map","Where kiosk data points toward actionable improvements")
+  
+  +'<div class="card" style="border-left:4px solid '+T+'">'
+    +'<div style="display:flex;gap:12px;align-items:flex-start">'
+    +'<div style="font-size:28px">&#128640;</div>'
+    +'<div><div style="font-size:14px;font-weight:700;color:#3B2F2F;margin-bottom:6px">1. Flavor Shot Prompting</div>'
+    +'<div style="font-size:12.5px;color:#6B5B5B;line-height:1.6">The gap: <strong>POS flavor attach is 20.2% vs kiosk 6.0%</strong> &mdash; a 14.2pp difference representing the single largest customization opportunity. Baristas actively suggest flavors; the kiosk doesn&rsquo;t. Consider a contextual &ldquo;Add a flavor?&rdquo; prompt after drink selection with the most popular options (vanilla, caramel, sugar-free vanilla) surfaced first. At ~$0.80&ndash;$1.00 per flavor add, even closing half this gap would generate meaningful incremental revenue.</div>'
+    +'</div></div>'
+  +'</div>'
+
+  +'<div class="card" style="border-left:4px solid '+C+'">'
+    +'<div style="display:flex;gap:12px;align-items:flex-start">'
+    +'<div style="font-size:28px">&#127860;</div>'
+    +'<div><div style="font-size:14px;font-weight:700;color:#3B2F2F;margin-bottom:6px">2. Food Pairing Screen</div>'
+    +'<div style="font-size:12.5px;color:#6B5B5B;line-height:1.6">The gap: <strong>POS food attach is 38.3% vs kiosk 30.1%</strong> &mdash; 8.2pp. The pastry case drives impulse food purchase at the counter that the kiosk can&rsquo;t replicate physically. A &ldquo;Pair with your drink?&rdquo; interstitial showing top food items (Denver Breakfast Bowl, Lumberjack, Blueberry Muffin) with imagery could narrow this gap. Morning daypart would be the highest-value placement.</div>'
+    +'</div></div>'
+  +'</div>'
+
+  +'<div class="card" style="border-left:4px solid '+B+'">'
+    +'<div style="display:flex;gap:12px;align-items:flex-start">'
+    +'<div style="font-size:28px">&#128207;</div>'
+    +'<div><div style="font-size:14px;font-weight:700;color:#3B2F2F;margin-bottom:6px">3. Size-Up Nudge</div>'
+    +'<div style="font-size:12.5px;color:#6B5B5B;line-height:1.6">POS has more Large orders (27.0% vs 21.3%), suggesting baristas are effectively nudging size-ups. The kiosk flow could test a &ldquo;Go Large for just $0.40 more&rdquo; visual prompt. Meanwhile, kiosk&rsquo;s <strong>Extra Large rate (8.5% vs 4.5%)</strong> shows the XL option is more discoverable on screen &mdash; so the kiosk UX <em>does</em> work for guests who want maximum size, it just doesn&rsquo;t convert the Medium-to-Large swing.</div>'
+    +'</div></div>'
+  +'</div>'
+
+  +'<div class="card" style="border-left:4px solid '+TD+'">'
+    +'<div style="display:flex;gap:12px;align-items:flex-start">'
+    +'<div style="font-size:28px">&#127919;</div>'
+    +'<div><div style="font-size:14px;font-weight:700;color:#3B2F2F;margin-bottom:6px">4. Perks Sign-Up Flow</div>'
+    +'<div style="font-size:12.5px;color:#6B5B5B;line-height:1.6">Kiosk <strong>sign-in is live</strong> today, enabling authenticated order tracking. The next step is deploying the <strong>sign-up flow</strong> (new Perks enrollment at kiosk checkout). Other Toast kiosk brands see 2&ndash;3&times; higher enrollment rates vs barista-prompted POS. This is measurable from day one and creates a compounding effect: Perks members visit more frequently and spend more per visit.</div>'
+    +'</div></div>'
+  +'</div>'
+
+  +'<div class="card" style="border-left:4px solid #6B5B5B">'
+    +'<div style="display:flex;gap:12px;align-items:flex-start">'
+    +'<div style="font-size:28px">&#128268;</div>'
+    +'<div><div style="font-size:14px;font-weight:700;color:#3B2F2F;margin-bottom:6px">5. Menu Name Normalization</div>'
+    +'<div style="font-size:12.5px;color:#6B5B5B;line-height:1.6">The kiosk and POS menus use different item names for the same products (&ldquo;Light Roast Coffee of the Day&rdquo; vs &ldquo;Light COD&rdquo;, &ldquo;Hot Classic Chai Latte&rdquo; vs &ldquo;Hot Chai Tea&rdquo;). This makes PMIX comparison harder than it needs to be. Normalizing names across menus would enable cleaner analytics and make future kiosk vs POS reporting automatic.</div>'
+    +'</div></div>'
+  +'</div>'
+
+  +sec("What Kiosk Is Already Winning")
+  +'<div class="card">'
+    +'<div class="chip-row">'
+      +'<div class="chip" style="background:'+TB+'"><div class="chip-icon">&#129379;</div><div class="chip-label">Alt Milk Discovery</div><div class="chip-value" style="color:'+TD+'">+12.6pp</div><div class="chip-sub">28.7% vs 16.1%</div></div>'
+      +'<div class="chip" style="background:'+TB+'"><div class="chip-icon">&#9729;&#65039;</div><div class="chip-label">Cold Foam Attach</div><div class="chip-value" style="color:'+TD+'">+3.2pp</div><div class="chip-sub">3.2% vs ~0%</div></div>'
+      +'<div class="chip" style="background:'+TB+'"><div class="chip-icon">&#128200;</div><div class="chip-label">Drink Price Premium</div><div class="chip-value" style="color:'+TD+'">+$0.28</div><div class="chip-sub">$6.10 vs $5.82</div></div>'
+      +'<div class="chip" style="background:'+TB+'"><div class="chip-icon">&#128640;</div><div class="chip-label">XL Rate</div><div class="chip-value" style="color:'+TD+'">2&times;</div><div class="chip-sub">8.5% vs 4.5%</div></div>'
+    +'</div>'
+  +'</div>'
+
+  +'<div class="cta-box" style="background:'+TB+';border:1px solid rgba(77,196,207,0.2)">'
+    +'<div class="cta-title" style="color:'+TD+'">Early Pilot Read</div>'
+    +'<div class="cta-body">Across 4 stores and 1,490 kiosk items in February, the data shows kiosk is already driving a <strong>$0.28 drink price premium</strong> and making alt milk and cold foam significantly more discoverable. The biggest untapped opportunities are flavor shot prompting (14.2pp gap), food pairing (8.2pp gap), and size-up nudging (5.7pp Large gap). With Perks sign-up flow still to come, the kiosk channel has clear room to grow &mdash; and the data to prove it.</div>'
+  +'</div>'
+
+  +'<div style="margin-top:20px;font-size:11px;color:#9A8A8A;line-height:1.6">'
+    +'<strong>Data notes:</strong> PMIX export, Feb 2026, Kiosk source vs In-Store source. Size and add-on percentages calculated against sized drink count (K:'+fmt(D.k_sized)+', P:'+fmt(D.p_sized)+'). Food attach = food items / drink items. Some items appear only on one menu due to different menu configurations across channels. Per-store device counts not yet incorporated.'
+  +'</div>';
+}
+
+renderTabs();
+renderContent();
+</script>
+</body>
+</html>
